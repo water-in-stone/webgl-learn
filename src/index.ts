@@ -53,16 +53,25 @@ function main() {
     // set the resolution
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
+    // set the color
+    gl.uniform4f(colorUniformLocation, 1, 0, 1, 1);
+
     // draw rectangles
-    const rectangles = [0, 0, 100, 0, 100, 100, 0, 0];
+    const rectangles = [
+        0, 0,
+        0, 100,
+        100, 0,
+        100, 100,
+        0, 100,
+        100, 0
+    ];
 
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(rectangles),
         gl.STATIC_DRAW
     );
-    gl.drawArrays(gl.TRIANGLES, 0, 4);
-    // console.log("object");
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 main();
