@@ -1,6 +1,9 @@
 attribute vec2 a_position;
+attribute vec3 a_color;
 
 uniform vec2 u_resolution;
+
+varying vec3 v_color;
 
 void main() {
   // convert the rectangle from pixels to 0.0 to 1.0
@@ -12,5 +15,6 @@ void main() {
    // convert from 0->2 to -1->+1 (clipspace)
   vec2 clipSpace = zeroToTwo - 1.0;
 
+  v_color = a_color;
   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
 }
