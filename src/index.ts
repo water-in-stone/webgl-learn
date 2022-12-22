@@ -45,12 +45,12 @@ function main() {
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     // set the color
     const colors = [
-        Math.random(), Math.random(), Math.random(),
-        Math.random(), Math.random(), Math.random(),
-        Math.random(), Math.random(), Math.random(),
-        Math.random(), Math.random(), Math.random(),
-        Math.random(), Math.random(), Math.random(),
-        Math.random(), Math.random(), Math.random()
+        Math.random() * 255, Math.random() * 255, Math.random() * 255,
+        Math.random() * 255, Math.random() * 255, Math.random() * 255,
+        Math.random() * 255, Math.random() * 255, Math.random() * 255,
+        Math.random() * 255, Math.random() * 255, Math.random() * 255,
+        Math.random() * 255, Math.random() * 255, Math.random() * 255,
+        Math.random() * 255, Math.random() * 255, Math.random() * 255
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
     
@@ -78,7 +78,7 @@ function main() {
     // enable the color attributes
     gl.enableVertexAttribArray(colorAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
     
     // enable the position attributes
     gl.enableVertexAttribArray(poistionAttributeLocation);
