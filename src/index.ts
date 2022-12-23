@@ -40,21 +40,30 @@ async function main() {
     // create texture buffer
     const texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        0, 0,
-        0, 1,
-        1, 0,
-        1, 0,
-        0, 1,
-        1, 1
-    ]), gl.STATIC_DRAW);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1]),
+        gl.STATIC_DRAW
+    );
 
-
+    // get Image
+    const image = await loadImage("http://localhost:8080/leaves.jpg");
+    const {
+        width: imageWidth,
+        height: imageHeight,
+    } = image;
     // Create a buffer and put three 2d clip space points in it
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // buffer rectangles data
-    const rectangles = [0, 0, 0, 300, 300, 0, 300, 300, 0, 300, 300, 0];
+    const rectangles = [
+        0, 0,
+        0, imageHeight,
+        imageWidth, 0,
+        imageWidth, imageHeight,
+        0, imageHeight,
+        imageWidth, 0
+    ];
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(rectangles),
@@ -109,6 +118,33 @@ async function main() {
     // set the resolution
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
+    // set the detectKernel
+    const edgeDetectKernel = [
+        0, 0, 0,
+        0, 1, 0,
+        0, 0, 0
+    ];
+
+    const kernelLocation = gl.getUniformLocation(program, "u_kernel[0]");
+    
+    gl.uniform1fv(kernelLocation, edgeDetectKernel);
+
+    // set the KernelWeight
+    const kernelWeightSum = edgeDetectKernel.reduce(
+        (prev, curr) => prev + curr
+    );
+    const kernelWeight = kernelWeightSum <= 0 ? 1 : kernelWeightSum;
+
+    const kernelWeightLocation = gl.getUniformLocation(
+        program,
+        "u_kernelWeight"
+    );
+    gl.uniform1f(kernelWeightLocation, kernelWeight);
+
+    // set the size of the image
+    const textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
+    gl.uniform2f(textureSizeLocation, imageWidth, imageHeight);
+
     // enable the color attributes
     gl.enableVertexAttribArray(colorAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -137,7 +173,7 @@ async function main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
     // Upload the image into the texture.
-    const image = await loadImage('http://localhost:8080/leaves.jpg');
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
     // enable the position attributes
