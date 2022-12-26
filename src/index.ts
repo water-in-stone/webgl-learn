@@ -1,4 +1,5 @@
 import App from './app';
+import TransformApp from './transform';
 
 async function loadImage(url: string) {
     return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -11,7 +12,8 @@ async function loadImage(url: string) {
 
 async function main() {
     const image = await loadImage("http://localhost:8080/leaves.jpg");
-    const app = new App(image);
+    // const app = new App(image);
+    new TransformApp();
 }
 
 main();
