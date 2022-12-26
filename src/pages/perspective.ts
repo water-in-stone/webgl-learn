@@ -16,10 +16,10 @@ class Perspective {
     matrixLocation: WebGLUniformLocation;
     fudgeFactorLocation: WebGLUniformLocation;
 
-    translation = [0, 0, 0];
+    translation = [10, 10, 0];
     rotationDegree = [0, 0, 0];
     scale = [1, 1, 1];
-    fudgeFactor = 1;
+    fudgeFactor = 1.0;
 
     get rotation() {
         return this.rotationDegree.map(degToRad);
@@ -241,7 +241,7 @@ class Perspective {
         const matrix6 = translation(this.translation[0], this.translation[1], this.translation[2]);
 
         // Multiply the matrices.
-        const matrix = multiply(matrix1, matrix2);
+        const matrix = multiply(matrix1, matrix6);
 
         // Set the matrix.
         gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
