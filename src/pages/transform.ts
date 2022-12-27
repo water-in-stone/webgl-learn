@@ -1,5 +1,5 @@
-import vertexShaderSource from "./shaders/transformVertex.glsl";
-import fragmentShaderSource from "./shaders/transformFragment.glsl";
+import vertexShaderSource from "../shaders/transformVertex.glsl";
+import fragmentShaderSource from "../shaders/transformFragment.glsl";
 
 const transformMatrix = {
     multiply: (a: number[], b: number[]) => {

@@ -1,5 +1,5 @@
-import vertexShaderSource from "./shaders/vertex.glsl";
-import fragmentShaderSource from "./shaders/fragment.glsl";
+import vertexShaderSource from "../shaders/vertex.glsl";
+import fragmentShaderSource from "../shaders/fragment.glsl";
 
 export default class App {
     gl: WebGLRenderingContext;

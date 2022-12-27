@@ -1,11 +1,18 @@
+const fs = require('fs');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const publicPath = path.resolve(__dirname, 'public');
+const pagePath = path.resolve(__dirname, 'src/pages');
+const pages = fs.readdirSync(pagePath).map(page => page.split('.')[0]);
+const entry = pages.reduce((config, page) => {
+    config[page] = `./src/pages/${page}.ts`;
+    return config;
+}, {});
+
 module.exports = {
     mode: 'development',
-    entry: {
-        perspective: './src/pages/perspective.ts',
-    },
+    entry,
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
@@ -31,7 +38,18 @@ module.exports = {
             }
         ]
     },
-    plugins: [new HtmlWebpackPlugin({
-        template: './public/index.html'
-    })],
+    optimization: {
+        splitChunks: {
+            chunks: "all",
+        },
+    },
+    plugins: [].concat(pages.map(
+        (page) =>
+            new HtmlWebpackPlugin({
+                inject: true,
+                template: path.resolve(publicPath, 'index.html'),
+                filename: `${page}.html`,
+                chunks: [page],
+            })
+    )),
 };
