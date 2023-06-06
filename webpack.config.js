@@ -44,7 +44,6 @@ module.exports = {
   },
   plugins: [].concat(
     pages.map((page) => {
-      console.log(`page is ${page}`);
       return new HtmlWebpackPlugin({
         inject: true,
         template: path.resolve(publicPath, 'index.html'),
