@@ -26,3 +26,11 @@ declare namespace webglUtils {
         canvas: HTMLCanvasElement,
     ): void;
 }
+
+declare namespace webglLessonsUI {
+    function setupUI(parent, object, uiInfos): Record<string, any>;
+    function updateUI(widgets, data): void;
+    function setupSlider(selector, options): any;
+    function makeSlider(options): any;
+    function makeCheckbox(options: any): any;
+}
