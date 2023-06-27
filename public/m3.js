@@ -34,7 +34,8 @@
  *
  * @module webgl-2d-math
  */
-(function(root, factory) {  // eslint-disable-line
+(function (root, factory) {
+  // eslint-disable-line
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
     define([], factory);
@@ -42,8 +43,8 @@
     // Browser globals
     root.m3 = factory();
   }
-}(this, function() {
-  "use strict";
+})(this, function () {
+  'use strict';
 
   /**
    * An array or typed array with 2 values.
@@ -56,7 +57,6 @@
    * @typedef {number[]|TypedArray} Matrix3
    * @memberOf module:webgl-2d-math
    */
-
 
   let MatType = Float32Array;
 
@@ -114,7 +114,6 @@
     return dst;
   }
 
-
   /**
    * Creates a 3x3 identity matrix
    * @param {module:webgl-2d-math.Matrix4} [dst] optional matrix to store result
@@ -146,7 +145,8 @@
   function projection(width, height, dst) {
     dst = dst || new MatType(9);
     // Note: This matrix flips the Y axis so 0 is at the top.
-    
+    // 这里之所以要 2 / width，因为这里的位置空间中，x方向上 [-1, 1]，y方向上也是[-1, 1]，所以x方向和y方向上的总长度均为2，
+    // 考虑到这里又是1个2D的变换，所以z方向上一直是1且不变
     dst[0] = 2 / width;
     dst[1] = 0;
     dst[2] = 0;
@@ -206,7 +206,7 @@
    * @return {module:webgl-2d-math.Matrix3} the result
    * @memberOf module:webgl-2d-math
    */
-  function translate(m, tx, ty, dst) {    
+  function translate(m, tx, ty, dst) {
     return multiply(m, translation(tx, ty), dst);
   }
 
@@ -309,18 +309,15 @@
   function reflect(ix, iy, nx, ny) {
     // I - 2.0 * dot(N, I) * N.
     var d = dot(nx, ny, ix, iy);
-    return [
-      ix - 2 * d * nx,
-      iy - 2 * d * ny,
-    ];
+    return [ix - 2 * d * nx, iy - 2 * d * ny];
   }
 
   function radToDeg(r) {
-    return r * 180 / Math.PI;
+    return (r * 180) / Math.PI;
   }
 
   function degToRad(d) {
-    return d * Math.PI / 180;
+    return (d * Math.PI) / 180;
   }
 
   function transformPoint(m, v) {
@@ -346,22 +343,22 @@
     const m21 = m[2 * 3 + 1];
     const m22 = m[2 * 3 + 2];
 
-    const b01 =  m22 * m11 - m12 * m21;
+    const b01 = m22 * m11 - m12 * m21;
     const b11 = -m22 * m10 + m12 * m20;
-    const b21 =  m21 * m10 - m11 * m20;
+    const b21 = m21 * m10 - m11 * m20;
 
     const det = m00 * b01 + m01 * b11 + m02 * b21;
     const invDet = 1.0 / det;
 
     dst[0] = b01 * invDet;
     dst[1] = (-m22 * m01 + m02 * m21) * invDet;
-    dst[2] = ( m12 * m01 - m02 * m11) * invDet;
+    dst[2] = (m12 * m01 - m02 * m11) * invDet;
     dst[3] = b11 * invDet;
-    dst[4] = ( m22 * m00 - m02 * m20) * invDet;
+    dst[4] = (m22 * m00 - m02 * m20) * invDet;
     dst[5] = (-m12 * m00 + m02 * m10) * invDet;
     dst[6] = b21 * invDet;
     dst[7] = (-m21 * m00 + m01 * m20) * invDet;
-    dst[8] = ( m11 * m00 - m01 * m10) * invDet;
+    dst[8] = (m11 * m00 - m01 * m10) * invDet;
 
     return dst;
   }
@@ -386,6 +383,4 @@
     translate: translate,
     project: project,
   };
-
-}));
-
+});
