@@ -145,8 +145,18 @@
   function projection(width, height, dst) {
     dst = dst || new MatType(9);
     // Note: This matrix flips the Y axis so 0 is at the top.
-    // 这里之所以要 2 / width，因为这里的位置空间中，x方向上 [-1, 1]，y方向上也是[-1, 1]，所以x方向和y方向上的总长度均为2，
-    // 考虑到这里又是1个2D的变换，所以z方向上一直是1且不变
+    //! 这个矩阵其实代表了顶点着色器里的下面几个操作
+    //* 从像素坐标转换到 0.0 到 1.0
+    //* vec2 zeroToOne = position / u_resolution;
+    //*
+    //* 再把 0->1 转换 0->2
+    //* vec2 zeroToTwo = zeroToOne * 2.0;
+    //*
+    //* 把 0->2 转换到 -1->+1 (裁剪空间)
+    //* vec2 clipSpace = zeroToTwo - 1.0;
+    //*
+    //* gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
     dst[0] = 2 / width;
     dst[1] = 0;
     dst[2] = 0;
