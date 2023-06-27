@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { log } = require('console');
 
 const publicPath = path.resolve(__dirname, 'public');
 const pagePath = path.resolve(__dirname, 'src/pages');
@@ -44,9 +45,14 @@ module.exports = {
   },
   plugins: [].concat(
     pages.map((page) => {
+      // TODO 按照目录和 "/" 来进行真正的划分
+      let realPath = path.resolve(publicPath, 'index.html');
+      if (page.indexOf('texture') !== -1) {
+        realPath = path.resolve(publicPath, 'texture/index.html');
+      }
       return new HtmlWebpackPlugin({
         inject: true,
-        template: path.resolve(publicPath, 'index.html'),
+        template: realPath,
         filename: `${page}.html`,
         chunks: [page],
       });

@@ -15,6 +15,8 @@ void main() {
    // convert from 0->2 to -1->+1 (clipspace)
     vec2 clipSpace = zeroToTwo - 1.0;
 
+    //* 因为输入的是1个纹理，这里对应的是像素空间，而在像素空间中，左上角是（0, 0) 且Y轴上从上往下的，所以GPU在取位置 */ 
+    //* 坐标时，需要对裁剪空间的Y轴做一个翻转，`clipSpace * vec2(1, -1)` */ 
     gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
 
    // pass the texCoord to the fragment shader

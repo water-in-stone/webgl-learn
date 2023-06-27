@@ -1,7 +1,8 @@
-import vertexShaderSource from "../shaders/fundamental/texture/multi-filter/vertex-2d.glsl";
-import fragmentShaderSource from "../shaders/fundamental/texture/multi-filter/fragment-2d.glsl";
 
-// 带 spector.js 的texture图像处理
+import vertexShaderSource from "../shaders/fundamental/texture/frame-buffer/vertex-2d.glsl";
+import fragmentShaderSource from "../shaders/fundamental/texture/frame-buffer/fragment-2d.glsl";
+
+//! 使用帧缓存技术，来应用多个纹理
 export default class App {
     gl: WebGLRenderingContext;
     program: WebGLProgram;
@@ -10,33 +11,20 @@ export default class App {
     texcoordBuffer: WebGLBuffer;
 
     positionLocation: number;
-    textureCoordLocation: number;
-    textureLocation: WebGLUniformLocation;
-    reslutionLocation: WebGLUniformLocation;
     textureSizeLocation: WebGLUniformLocation;
     kernelLocation: WebGLUniformLocation;
     kernelWeightLocation: WebGLUniformLocation;
-
-    start: number;
-    previousTimeStamp: number;
-    done: boolean = false;
-    image: any;
 
     constructor() {
         this.main();
     }
 
-    step = (timeStamp) => {
-        this.render(this.image);
-        window.requestAnimationFrame(this.step);
-    }
 
     main() {
         var image = new Image();
         image.src = "http://localhost:8080/leaves.jpg";  // MUST BE SAME DOMAIN!!!
         image.onload = () => {
-            this.image = image;
-            window.requestAnimationFrame(this.step);
+            this.render(image);
         };
     }
 
@@ -51,6 +39,7 @@ export default class App {
 
         // setup GLSL program
         var program = webglUtils.createProgramFromSources(gl, [vertexShaderSource, fragmentShaderSource]);
+
 
         // look up where the vertex data needs to go.
         var positionLocation = gl.getAttribLocation(program, "a_position");
@@ -75,24 +64,52 @@ export default class App {
             1.0, 1.0,
         ]), gl.STATIC_DRAW);
 
-        // Create a texture.
-        var texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+        function createAndSetupTexture(gl) {
+            var texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
 
-        // Set the parameters so we can render any size image.
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            // Set up texture so we can render any size image and so we are
+            // working with pixels.
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            return texture;
+        }
 
-        // Upload the image into the texture.
+        // Create a texture and put the image in it.
+        var originalImageTexture = createAndSetupTexture(gl);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+        //! create 2 textures and attach them to frameBuffers. 之后执行 gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); 
+        //! 并调用`gl.drawArray`后，就可以把渲染结果输出到一个自定义的帧缓冲区，然后通过texture进行访问
+        var textures = [];
+        var frameBuffers = [];
+        for (var ii = 0; ii < 2; ++ii) {
+            var texture = createAndSetupTexture(gl);
+            textures.push(texture);
+
+            // make the texture the same size as the image
+            gl.texImage2D(
+                gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0,
+                gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+            // Create a framebuffer
+            var fbo = gl.createFramebuffer();
+            frameBuffers.push(fbo);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+            // Attach a texture to it.
+            gl.framebufferTexture2D(
+                gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        }
 
         // lookup uniforms
         var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
         var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
         var kernelLocation = gl.getUniformLocation(program, "u_kernel[0]");
         var kernelWeightLocation = gl.getUniformLocation(program, "u_kernelWeight");
+        var flipYLocation = gl.getUniformLocation(program, "u_flipY");
 
         // Define several convolution kernels
         var kernels = {
@@ -198,9 +215,53 @@ export default class App {
             ]
         };
 
-        //! 可以在这里去手动改对应的卷积核
-        var initialSelection = 'sharpness';
-        drawWithKernel(initialSelection);
+        var effects = [
+            { name: "gaussianBlur3", on: true },
+            { name: "gaussianBlur3", on: true },
+            { name: "gaussianBlur3", on: true },
+            { name: "sharpness", },
+            { name: "sharpness", },
+            { name: "sharpness", },
+            { name: "sharpen", },
+            { name: "sharpen", },
+            { name: "sharpen", },
+            { name: "unsharpen", },
+            { name: "unsharpen", },
+            { name: "unsharpen", },
+            { name: "emboss", on: true },
+            { name: "edgeDetect", },
+            { name: "edgeDetect", },
+            { name: "edgeDetect3", },
+            { name: "edgeDetect3", },
+        ];
+
+        // Setup a ui.
+        var ui = document.querySelector("#ui");
+        var table = document.createElement("table");
+        var tbody = document.createElement("tbody");
+        for (var ii = 0; ii < effects.length; ++ii) {
+            var effect = effects[ii];
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            var chk = document.createElement("input") as HTMLInputElement;
+            chk.value = effect.name;
+            chk.type = "checkbox";
+            if (effect.on) {
+                // @ts-ignore
+                chk.checked = "true";
+            }
+            chk.onchange = drawEffects;
+            td.appendChild(chk);
+            td.appendChild(document.createTextNode('≡ ' + effect.name));
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        ui.appendChild(table);
+        // @ts-ignore
+        $(table).tableDnD({ onDrop: drawEffects });
+
+        drawEffects();
 
         function computeKernelWeight(kernel) {
             var weight = kernel.reduce(function (prev, curr) {
@@ -209,11 +270,8 @@ export default class App {
             return weight <= 0 ? 1 : weight;
         }
 
-        function drawWithKernel(name) {
-            webglUtils.resizeCanvasToDisplaySize(gl.canvas as any);
-
-            // Tell WebGL how to convert from clip space to pixels
-            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        function drawEffects() {
+            webglUtils.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
 
             // Clear the canvas
             gl.clearColor(0, 0, 0, 0);
@@ -234,7 +292,6 @@ export default class App {
             var normalize = false; // don't normalize the data
             var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
             var offset = 0;        // start at the beginning of the buffer
-            gl.enable
             gl.vertexAttribPointer(
                 positionLocation, size, type, normalize, stride, offset);
 
@@ -253,12 +310,58 @@ export default class App {
             gl.vertexAttribPointer(
                 texcoordLocation, size, type, normalize, stride, offset);
 
-            // set the resolution
-            gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-
             // set the size of the image
             gl.uniform2f(textureSizeLocation, image.width, image.height);
 
+            //! start with the original image
+            gl.bindTexture(gl.TEXTURE_2D, originalImageTexture);
+
+            //* don't y flip images while drawing to the textures，因为此时我们还不需要真正显示在屏幕上（即裁剪空间）
+            gl.uniform1f(flipYLocation, 1);
+
+            // loop through each effect we want to apply.
+            var count = 0;
+            for (var ii = 0; ii < tbody.rows.length; ++ii) {
+                var checkbox = tbody.rows[ii].firstChild.firstChild as HTMLInputElement;
+                if (checkbox.checked) {
+                    //! Setup to draw into one of the frameBuffers.
+                    //! 这里以 count = 0 为例，当 count 为 0 时，第一次会以 originalImageTexture 作为初始的texture，
+                    //! 此时片元着色器的结果（即调用）会输出到一个自定义的帧缓冲区上（即frameBuffer[0]，对应的结果可以在
+                    //! textures[0] 里访问），然后我们调用 `gl.bindTexture(gl.TEXTURE_2D, textures[0]);` 方法
+                    //! 将片元着色器里的 texture 更新，使得下一次设置自定义的帧缓冲区（ 即frameBuffers[1]）时，片元着色器
+                    //! 里的texture是上一次处理好的结果。后面的事情以此类推。
+                    setFramebuffer(frameBuffers[count % 2], image.width, image.height);
+
+                    drawWithKernel(checkbox.value);
+
+                    //! for the next draw, use the texture we just rendered to.
+                    gl.bindTexture(gl.TEXTURE_2D, textures[count % 2]);
+
+                    //! increment count so we use the other texture next time.
+                    ++count;
+                }
+            }
+
+            // finally draw the result to the canvas.
+            gl.uniform1f(flipYLocation, -1);  //! need to y flip for canvas，因为此时需要绘制到屏幕空间
+            //! gl.bindFramebuffer 设置为 null是告诉WebGL 你想在画布上绘制，而不是在帧缓冲上。
+            setFramebuffer(null, gl.canvas.width, gl.canvas.height);
+            drawWithKernel("normal");
+        }
+
+        function setFramebuffer(fbo, width, height) {
+            // make this the framebuffer we are rendering to.
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+            // Tell the shader the resolution of the framebuffer.
+            gl.uniform2f(resolutionLocation, width, height);
+
+            // Tell webgl the viewport setting needed for framebuffer.
+            gl.viewport(0, 0, width, height);
+        }
+
+
+        function drawWithKernel(name) {
             // set the kernel and it's weight
             gl.uniform1fv(kernelLocation, kernels[name]);
             gl.uniform1f(kernelWeightLocation, computeKernelWeight(kernels[name]));
@@ -267,7 +370,6 @@ export default class App {
             var primitiveType = gl.TRIANGLES;
             var offset = 0;
             var count = 6;
-
             gl.drawArrays(primitiveType, offset, count);
         }
     }

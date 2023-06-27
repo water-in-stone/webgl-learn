@@ -1,5 +1,5 @@
 
-import vertexShaderSource from "../shaders/fundamental/texture/simple/vertet-2d.glsl";
+import vertexShaderSource from "../shaders/fundamental/texture/simple/vertex-2d.glsl";
 import fragmentShaderSource from "../shaders/fundamental/texture/simple/fragment-2d.glsl";
 
 //! 将每个像素的值设置为与左右像素的均值，进行1个简单的模糊处理
@@ -80,7 +80,6 @@ export default class App {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-        // Upload the image into the texture.
         //! 因为我们这里只创建了1个纹理，所以是默认绑定到纹理单元0上的。
         //! 每个纹理单元都可以绑定一个纹理，然后就可以在着色器中通过sampler2D类型的uniform变量来访问这个纹理。
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -89,7 +88,7 @@ export default class App {
         var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
         var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
 
-        webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+        webglUtils.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
 
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);

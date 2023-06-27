@@ -23,6 +23,6 @@ declare namespace webglUtils {
         bufferInfo: any
     ): any;
     function resizeCanvasToDisplaySize(
-        gl: WebGLRenderingContext,
+        canvas: HTMLCanvasElement,
     ): void;
 }
