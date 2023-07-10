@@ -49,8 +49,10 @@ module.exports = {
       let realPath = path.resolve(publicPath, 'index.html');
       if (page.indexOf('texture') !== -1) {
         realPath = path.resolve(publicPath, 'texture/index.html');
-      } else if (page.indexOf('transformation' !== -1)) {
+      } else if (page.indexOf('transformation') !== -1) {
         realPath = path.resolve(publicPath, 'transformation/index.html');
+      } else if (page.indexOf('3d-camera') !== -1) {
+        realPath = path.resolve(publicPath, '3d/index.html');
       }
       return new HtmlWebpackPlugin({
         inject: true,

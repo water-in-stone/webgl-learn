@@ -34,3 +34,15 @@ declare namespace webglLessonsUI {
     function makeSlider(options): any;
     function makeCheckbox(options: any): any;
 }
+
+declare namespace m4 {
+    function transformPoint(m, v, dst?): any;
+    function perspective(fieldOfViewInRadians, aspect, near, far, dst?): any;
+    function lookAt(cameraPosition, target, up, dst?): any;
+    function inverse(m, dst?): any;
+    function multiply(a, b, dst?): any;
+    function yRotation(angleInRadians, dst?): any;
+    function normalize(v, dst?): any;
+    function xRotation(angleInRadians, dst?): any;
+    function translate(m, tx, ty, tz, dst?): any;
+}
