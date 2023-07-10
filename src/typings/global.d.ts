@@ -45,4 +45,5 @@ declare namespace m4 {
     function normalize(v, dst?): any;
     function xRotation(angleInRadians, dst?): any;
     function translate(m, tx, ty, tz, dst?): any;
+    function transpose(m, dst?): any;
 }
